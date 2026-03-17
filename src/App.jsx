@@ -17,6 +17,7 @@ import Exams from './pages/Exams';
 import Noticeboard from './pages/Noticeboard';
 import Grievances from './pages/Grievances';
 import Notes from './pages/Notes';
+import Placements from './pages/Placements';
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/noticeboard" element={<Noticeboard />} />
             <Route path="/grievances" element={<Grievances />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/placements" element={<Placements />} />
           </Route>
 
           {/* Fallback */}
