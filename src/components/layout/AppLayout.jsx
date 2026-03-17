@@ -6,7 +6,7 @@ import Navbar from './Navbar';
 import './AppLayout.css';
 
 export default function AppLayout() {
-  const { isAuthenticated, loading } = useAuth();
+  // const { isAuthenticated, loading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (loading) {
