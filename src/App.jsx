@@ -16,6 +16,7 @@ import Timetable from './pages/Timetable';
 import Exams from './pages/Exams';
 import Noticeboard from './pages/Noticeboard';
 import Grievances from './pages/Grievances';
+import Notes from './pages/Notes';
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="/exams" element={<Exams />} />
             <Route path="/noticeboard" element={<Noticeboard />} />
             <Route path="/grievances" element={<Grievances />} />
+            <Route path="/notes" element={<Notes />} />
           </Route>
 
           {/* Fallback */}
