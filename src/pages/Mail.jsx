@@ -1,19 +1,25 @@
-import { useState } from 'react';
-
-const MAILS = [
-  { id: 1, from: 'Dr. Priya Mehta', subject: 'Assignment Deadline Extended', preview: 'The deadline for the Data Structures assignment has been extended to March 25...', time: '10:30 AM', read: false, starred: true },
-  { id: 2, from: 'Admin Office', subject: 'Fee Payment Reminder', preview: 'This is a reminder that your Q2 tuition fee of ₹15,000 is due by March 31...', time: '9:15 AM', read: false, starred: false },
-  { id: 3, from: 'Prof. Anita Roy', subject: 'Software Engineering Lab Schedule', preview: 'Please note the updated lab schedule for this week. Lab 3 has been moved to...', time: 'Yesterday', read: true, starred: false },
-  { id: 4, from: 'Event Committee', subject: 'Tech Fest Volunteer Registration', preview: 'We are looking for volunteers for the upcoming Tech Fest. Register by March 20...', time: 'Yesterday', read: true, starred: true },
-  { id: 5, from: 'Library', subject: 'Book Return Reminder', preview: 'Your borrowed book "Introduction to Algorithms" is due for return on March 19...', time: '2 days ago', read: true, starred: false },
-  { id: 6, from: 'Dr. Amit Verma', subject: 'OS Project Groups Finalized', preview: 'The project groups for Operating Systems have been finalized. Please check...', time: '3 days ago', read: true, starred: false },
-  { id: 7, from: 'Hostel Warden', subject: 'Hostel Inspection Notice', preview: 'A routine hostel inspection will be conducted on March 22. Please ensure...', time: '4 days ago', read: true, starred: false },
-];
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useMailData } from '../hooks/useMailData';
 
 export default function Mail() {
+  const { user } = useAuth();
+  const { mails, loading, markAsRead } = useMailData(user);
+  
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState('inbox');
-  const selectedMail = MAILS.find(m => m.id === selected);
+  
+  const selectedMail = mails.find(m => m.id === selected);
+
+  useEffect(() => {
+    if (selectedMail && !selectedMail.read) {
+      markAsRead(selectedMail.id);
+    }
+  }, [selectedMail, markAsRead]);
+
+  if (loading && !mails.length) {
+    return <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>Loading mail...</div>;
+  }
 
   return (
     <div className="page-container">
@@ -40,7 +46,7 @@ export default function Mail() {
             ))}
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {(tab === 'starred' ? MAILS.filter(m => m.starred) : MAILS).map(mail => (
+            {(tab === 'starred' ? mails.filter(m => m.starred) : mails).map(mail => (
               <div key={mail.id} onClick={() => setSelected(mail.id)}
                 style={{
                   padding: 'var(--space-md)', borderBottom: '1px solid var(--border-subtle)',
@@ -55,11 +61,14 @@ export default function Mail() {
                 <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mail.preview}</div>
               </div>
             ))}
+            {mails.length === 0 && (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No emails found.</div>
+            )}
           </div>
         </div>
 
         {/* Mail Content */}
-        <div className="glass-card" style={{ padding: 'var(--space-lg)' }}>
+        <div className="glass-card" style={{ padding: 'var(--space-lg)', overflowY: 'auto' }}>
           {selectedMail ? (
             <>
               <div style={{ marginBottom: 'var(--space-lg)' }}>
@@ -76,12 +85,16 @@ export default function Mail() {
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', lineHeight: 1.8, borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-lg)' }}>
-                <p>{selectedMail.preview}</p>
-                <br />
-                <p>This is a demo preview of the email content. In the full version, this would display the complete email body with formatting, attachments, and more.</p>
-                <br />
-                <p>Best regards,<br />{selectedMail.from}</p>
+              <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', lineHeight: 1.8, borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-lg)', whiteSpace: 'pre-wrap' }}>
+                {selectedMail.fullBody ? selectedMail.fullBody : (
+                  <>
+                    <p>{selectedMail.preview}</p>
+                    <br />
+                    <p>This is a demo preview of the email content. In the full version, this would display the complete email body with formatting, attachments, and more.</p>
+                    <br />
+                    <p>Best regards,<br />{selectedMail.from}</p>
+                  </>
+                )}
               </div>
             </>
           ) : (

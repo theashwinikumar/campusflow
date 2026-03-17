@@ -1,17 +1,18 @@
-const FEES = [
-  { id: 1, type: 'Tuition Fee', amount: 45000, dueDate: '2026-03-31', status: 'pending' },
-  { id: 2, type: 'Hostel Fee', amount: 25000, dueDate: '2026-03-31', status: 'pending' },
-  { id: 3, type: 'Exam Fee', amount: 3000, dueDate: '2026-04-15', status: 'upcoming' },
-  { id: 4, type: 'Library Fee', amount: 1500, dueDate: '2026-02-28', status: 'paid' },
-  { id: 5, type: 'Lab Fee', amount: 5000, dueDate: '2026-01-31', status: 'paid' },
-  { id: 6, type: 'Sports Fee', amount: 2000, dueDate: '2026-01-31', status: 'paid' },
-];
+import { useAuth } from '../context/AuthContext';
+import { useFeesData } from '../hooks/useFeesData';
 
 const STATUS_BADGE = { paid: 'badge-green', pending: 'badge-amber', upcoming: 'badge-blue', overdue: 'badge-red' };
 
 export default function Fees() {
-  const totalDue = FEES.filter(f => f.status === 'pending').reduce((a, f) => a + f.amount, 0);
-  const totalPaid = FEES.filter(f => f.status === 'paid').reduce((a, f) => a + f.amount, 0);
+  const { user } = useAuth();
+  const { fees, payFee, loading } = useFeesData(user);
+
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>Loading fee details...</div>;
+  }
+
+  const totalDue = fees.filter(f => f.status === 'pending' || f.status === 'overdue').reduce((a, f) => a + Number(f.amount), 0);
+  const totalPaid = fees.filter(f => f.status === 'paid').reduce((a, f) => a + Number(f.amount), 0);
 
   return (
     <div className="page-container">
@@ -33,7 +34,7 @@ export default function Fees() {
         </div>
         <div className="glass-card stat-card">
           <div className="stat-card__icon">📅</div>
-          <div className="stat-card__value">{FEES.filter(f => f.status === 'pending').length}</div>
+          <div className="stat-card__value">{fees.filter(f => f.status === 'pending' || f.status === 'overdue').length}</div>
           <div className="stat-card__label">Pending Payments</div>
         </div>
         <div className="glass-card stat-card">
@@ -51,20 +52,23 @@ export default function Fees() {
             <tr><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
           </thead>
           <tbody>
-            {FEES.map(fee => (
+            {fees.map(fee => (
               <tr key={fee.id}>
                 <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{fee.type}</td>
-                <td style={{ fontFamily: 'var(--font-heading)', fontWeight: 600 }}>₹{fee.amount.toLocaleString('en-IN')}</td>
+                <td style={{ fontFamily: 'var(--font-heading)', fontWeight: 600 }}>₹{Number(fee.amount).toLocaleString('en-IN')}</td>
                 <td>{new Date(fee.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                <td><span className={`badge ${STATUS_BADGE[fee.status]}`}>{fee.status}</span></td>
+                <td><span className={`badge ${STATUS_BADGE[fee.status] || 'badge-blue'}`}>{fee.status}</span></td>
                 <td>
                   {fee.status === 'paid'
                     ? <button className="btn btn-ghost" style={{ fontSize: 'var(--text-xs)' }}>📥 Receipt</button>
-                    : <button className="btn btn-primary" style={{ fontSize: 'var(--text-xs)', padding: '4px 12px' }}>Pay Now</button>
+                    : <button className="btn btn-primary" onClick={() => payFee(fee.id)} style={{ fontSize: 'var(--text-xs)', padding: '4px 12px' }}>Pay Now</button>
                   }
                 </td>
               </tr>
             ))}
+            {fees.length === 0 && (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No fee records found.</td></tr>
+            )}
           </tbody>
         </table>
       </div>

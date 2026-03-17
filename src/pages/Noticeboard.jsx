@@ -1,20 +1,18 @@
 import { useState } from 'react';
-
-const NOTICES = [
-  { id: 1, title: 'Mid-Semester Exam Schedule Released', body: 'The mid-semester examination schedule for all departments has been published. Please check the Exams section for detailed timetable.', category: 'academic', urgent: true, pinned: true, author: 'Examination Cell', date: '2026-03-17' },
-  { id: 2, title: 'Campus WiFi Maintenance — March 20', body: 'Campus WiFi will be under maintenance from 10 PM to 6 AM on March 20. Please plan accordingly.', category: 'general', urgent: false, pinned: true, author: 'IT Department', date: '2026-03-16' },
-  { id: 3, title: 'Tech Fest 2026 Registrations Open', body: 'Register for the Annual Tech Fest 2026! Over 20 events including hackathons, coding contests, and workshops. Last date: March 22.', category: 'events', urgent: false, pinned: false, author: 'Event Committee', date: '2026-03-15' },
-  { id: 4, title: 'Library Hours Extended During Exams', body: 'The central library will remain open until 11 PM from April 10 to April 30 to support exam preparation.', category: 'academic', urgent: false, pinned: false, author: 'Library', date: '2026-03-14' },
-  { id: 5, title: 'Anti-Ragging Awareness Week', body: 'Anti-ragging awareness sessions will be held from March 24-28. Attendance is mandatory for all first-year students.', category: 'general', urgent: true, pinned: false, author: 'Dean of Students', date: '2026-03-13' },
-  { id: 6, title: 'Semester Fee Last Date: March 31', body: 'Students are reminded that the last date for paying semester fees without late charges is March 31, 2026.', category: 'finance', urgent: true, pinned: false, author: 'Accounts Department', date: '2026-03-12' },
-];
+import { useNoticeboardData } from '../hooks/useNoticeboardData';
 
 const CAT_COLORS = { academic: 'blue', general: 'purple', events: 'green', finance: 'amber' };
 
 export default function Noticeboard() {
+  const { notices, loading } = useNoticeboardData();
   const [filter, setFilter] = useState('all');
   const cats = ['all', 'academic', 'general', 'events', 'finance'];
-  const filtered = filter === 'all' ? NOTICES : NOTICES.filter(n => n.category === filter);
+
+  const filtered = filter === 'all' ? notices : notices.filter(n => n.category === filter);
+
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>Loading notices...</div>;
+  }
 
   return (
     <div className="page-container">
@@ -44,7 +42,7 @@ export default function Noticeboard() {
               <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
                 {notice.pinned && <span title="Pinned" style={{ fontSize: '0.9rem' }}>📌</span>}
                 {notice.urgent && <span className="badge badge-red">🔴 Urgent</span>}
-                <span className={`badge badge-${CAT_COLORS[notice.category]}`}>{notice.category}</span>
+                <span className={`badge badge-${CAT_COLORS[notice.category] || 'purple'}`}>{notice.category}</span>
               </div>
               <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
                 {new Date(notice.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -55,6 +53,9 @@ export default function Noticeboard() {
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Posted by {notice.author}</span>
           </div>
         ))}
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No notices found.</div>
+        )}
       </div>
     </div>
   );

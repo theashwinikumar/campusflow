@@ -1,0 +1,60 @@
+{
+  "name": "Leave Request Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "leave-request",
+        "options": {}
+      },
+      "id": "3c4d5e6f-leave-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "campusflow-leave-webhook"
+    },
+    {
+      "parameters": {
+        "fromEmail": "admin@campusflow.edu",
+        "toEmail": "={{ $json.body.approver_email }}",
+        "subject": "New Leave Request Submitted",
+        "text": "={{ 'A new ' + $json.body.leave_type + ' leave request has been submitted by ' + $json.body.student_name + '. Please review it in the CampusFlow portal.' }}",
+        "options": {}
+      },
+      "id": "4d5e6f7a-send-email",
+      "name": "Send Email to Approver",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Email to Approver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "e1de7d71-c0c1-4b13-9f5e-14fbdb7d6db1",
+  "id": "leave-request-workflow",
+  "meta": {
+    "instanceId": "random-uuid-for-n8n-instance"
+  },
+  "tags": []
+}
