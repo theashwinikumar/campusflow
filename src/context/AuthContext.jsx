@@ -83,9 +83,12 @@ export function AuthProvider({ children }) {
   };
 
   const loginDemo = async (role) => {
+    console.log('loginDemo called for role:', role);
     setLoading(true);
     await new Promise(r => setTimeout(r, 600));
-    setUser(DEMO_USERS[role] || DEMO_USERS.student);
+    const demoUser = DEMO_USERS[role] || DEMO_USERS.student;
+    console.log('Setting user to:', demoUser.name);
+    setUser(demoUser);
     setLoading(false);
   };
 
@@ -106,7 +109,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

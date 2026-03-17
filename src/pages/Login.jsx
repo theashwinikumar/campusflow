@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { IS_DEMO_MODE } from '../lib/supabase';
@@ -12,31 +12,43 @@ const ROLES = [
 ];
 
 export default function Login() {
-  const { login, loading } = useAuth();
+  const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleLogin = async (e) => {
     e?.preventDefault();
     setError('');
-    
+
+    const roleToUse = selectedRole || 'student';
+    console.log('Login attempt started. Role:', roleToUse, 'Demo Mode:', IS_DEMO_MODE);
+
     try {
       if (IS_DEMO_MODE) {
-        if (!selectedRole) return;
-        await login(selectedRole);
+        console.log('Demo login triggered');
+        await login(roleToUse);
       } else {
+        console.log('Supabase login triggered');
         if (!email || !password) {
           setError('Email and password are required');
           return;
         }
         await login(email, password);
       }
+      console.log('Login successful, navigating...');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please try again.');
     }
   };
 
@@ -56,15 +68,15 @@ export default function Login() {
         </div>
 
         <div className="login-form">
-          {error && <div className="login-error" style={{color: '#ef4444', marginBottom: '1rem', textAlign: 'center'}}>{error}</div>}
-          
-          <form onSubmit={handleLogin} style={{display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%'}}>
+          {error && <div className="login-error" style={{ color: '#ef4444', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
             <div className="login-field">
               <label>Email</label>
-              <input 
-                type="email" 
-                className="input-field" 
-                placeholder="you@campus.edu" 
+              <input
+                type="email"
+                className="input-field"
+                placeholder="you@campus.edu"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"
@@ -72,10 +84,10 @@ export default function Login() {
             </div>
             <div className="login-field">
               <label>Password</label>
-              <input 
-                type="password" 
-                className="input-field" 
-                placeholder="••••••••" 
+              <input
+                type="password"
+                className="input-field"
+                placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -105,7 +117,7 @@ export default function Login() {
             <button
               type="submit"
               className="btn btn-primary login-submit"
-              disabled={(IS_DEMO_MODE && !selectedRole) || loading}
+              disabled={(!IS_DEMO_MODE && (!email || !password)) || loading}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
