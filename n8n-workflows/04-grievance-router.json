@@ -1,0 +1,174 @@
+{
+  "name": "4. Grievance Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "grievance-submit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook - New Grievance",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "outputKey": "Academic", "conditions": { "conditions": [{ "leftValue": "={{ $json.body.category }}", "rightValue": "academic", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "Hostel", "conditions": { "conditions": [{ "leftValue": "={{ $json.body.category }}", "rightValue": "hostel", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "Infrastructure", "conditions": { "conditions": [{ "leftValue": "={{ $json.body.category }}", "rightValue": "infrastructure", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "Other", "conditions": { "conditions": [{ "leftValue": "={{ $json.body.category }}", "rightValue": "other", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-1",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "routed_to", "value": "academic-dean@college.edu" },
+            { "name": "department", "value": "Academic Affairs" },
+            { "name": "subject", "value": "📋 Academic Grievance: {{ $json.body.subject }}" },
+            { "name": "message", "value": "New academic grievance received.\n\nFrom: {{ $json.body.student_name }} ({{ $json.body.roll_no }})\nCategory: Academic\nSubject: {{ $json.body.subject }}\nDescription: {{ $json.body.description }}\nPriority: {{ $json.body.priority }}\nAnonymous: {{ $json.body.anonymous }}\n\nPlease review on CampusFlow." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-academic",
+      "name": "Route to Academic Dean",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [760, 120]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "routed_to", "value": "hostel-warden@college.edu" },
+            { "name": "department", "value": "Hostel Administration" },
+            { "name": "subject", "value": "🏠 Hostel Grievance: {{ $json.body.subject }}" },
+            { "name": "message", "value": "New hostel grievance received.\n\nFrom: {{ $json.body.student_name }} ({{ $json.body.roll_no }})\nCategory: Hostel\nSubject: {{ $json.body.subject }}\nDescription: {{ $json.body.description }}\nPriority: {{ $json.body.priority }}\n\nPlease review on CampusFlow." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-hostel",
+      "name": "Route to Hostel Warden",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [760, 280]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "routed_to", "value": "maintenance@college.edu" },
+            { "name": "department", "value": "Infrastructure & Maintenance" },
+            { "name": "subject", "value": "🔧 Infrastructure Grievance: {{ $json.body.subject }}" },
+            { "name": "message", "value": "New infrastructure grievance received.\n\nFrom: {{ $json.body.student_name }} ({{ $json.body.roll_no }})\nCategory: Infrastructure\nSubject: {{ $json.body.subject }}\nDescription: {{ $json.body.description }}\nPriority: {{ $json.body.priority }}\n\nPlease review on CampusFlow." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-infra",
+      "name": "Route to Maintenance",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [760, 440]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "routed_to", "value": "admin@college.edu" },
+            { "name": "department", "value": "General Administration" },
+            { "name": "subject", "value": "📌 General Grievance: {{ $json.body.subject }}" },
+            { "name": "message", "value": "New grievance received.\n\nFrom: {{ $json.body.student_name }} ({{ $json.body.roll_no }})\nCategory: Other\nSubject: {{ $json.body.subject }}\nDescription: {{ $json.body.description }}\nPriority: {{ $json.body.priority }}\n\nPlease review on CampusFlow." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-other",
+      "name": "Route to Admin",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [760, 600]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'routed', department: $json.department, routed_to: $json.routed_to, subject: $json.subject }) }}",
+        "options": {}
+      },
+      "id": "respond-1",
+      "name": "Respond - Routed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'routed', department: $json.department, routed_to: $json.routed_to, subject: $json.subject }) }}",
+        "options": {}
+      },
+      "id": "respond-2",
+      "name": "Respond - Routed 2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 280]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'routed', department: $json.department, routed_to: $json.routed_to, subject: $json.subject }) }}",
+        "options": {}
+      },
+      "id": "respond-3",
+      "name": "Respond - Routed 3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 440]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'routed', department: $json.department, routed_to: $json.routed_to, subject: $json.subject }) }}",
+        "options": {}
+      },
+      "id": "respond-4",
+      "name": "Respond - Routed 4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 600]
+    }
+  ],
+  "connections": {
+    "Webhook - New Grievance": { "main": [[{ "node": "Route by Category", "type": "main", "index": 0 }]] },
+    "Route by Category": {
+      "main": [
+        [{ "node": "Route to Academic Dean", "type": "main", "index": 0 }],
+        [{ "node": "Route to Hostel Warden", "type": "main", "index": 0 }],
+        [{ "node": "Route to Maintenance", "type": "main", "index": 0 }],
+        [{ "node": "Route to Admin", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route to Academic Dean": { "main": [[{ "node": "Respond - Routed", "type": "main", "index": 0 }]] },
+    "Route to Hostel Warden": { "main": [[{ "node": "Respond - Routed 2", "type": "main", "index": 0 }]] },
+    "Route to Maintenance": { "main": [[{ "node": "Respond - Routed 3", "type": "main", "index": 0 }]] },
+    "Route to Admin": { "main": [[{ "node": "Respond - Routed 4", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "CampusFlow" }]
+}
