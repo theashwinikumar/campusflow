@@ -1,0 +1,74 @@
+{
+  "name": "3. Fee Payment Reminder (Scheduled)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Schedule - Every Monday 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "query_description", "value": "Fetch students with pending fee payments from Supabase" }
+          ],
+          "object": [
+            {
+              "name": "mock_students_with_pending_fees",
+              "value": "[{\"name\": \"Arjun Sharma\", \"email\": \"arjun@college.edu\", \"roll\": \"CS2022001\", \"pending\": 45000, \"due_date\": \"2026-04-01\"}, {\"name\": \"Sneha Patel\", \"email\": \"sneha@college.edu\", \"roll\": \"CS2022002\", \"pending\": 45000, \"due_date\": \"2026-04-01\"}, {\"name\": \"Vikram Rao\", \"email\": \"vikram@college.edu\", \"roll\": \"CS2022004\", \"pending\": 22500, \"due_date\": \"2026-04-01\"}, {\"name\": \"Meera Joshi\", \"email\": \"meera@college.edu\", \"roll\": \"IT2022001\", \"pending\": 45000, \"due_date\": \"2026-04-01\"}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-1",
+      "name": "Mock - Fetch Pending Fees",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "mock_students_with_pending_fees",
+        "options": {}
+      },
+      "id": "split-1",
+      "name": "Split Into Individual Students",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [740, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "to", "value": "={{ $json.email }}" },
+            { "name": "subject", "value": "💰 Fee Payment Reminder - CampusFlow" },
+            { "name": "message", "value": "Dear {{ $json.name }},\n\nThis is a reminder that your fee payment is pending.\n\nRoll Number: {{ $json.roll }}\nPending Amount: ₹{{ $json.pending }}\nDue Date: {{ $json.due_date }}\n\nPlease make the payment before the due date to avoid late fees.\n\nPay online at: CampusFlow > Fees > Pay Now\n\nRegards,\nCampusFlow Finance Department" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-2",
+      "name": "Prepare Reminder Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [980, 300]
+    }
+  ],
+  "connections": {
+    "Schedule - Every Monday 9AM": { "main": [[{ "node": "Mock - Fetch Pending Fees", "type": "main", "index": 0 }]] },
+    "Mock - Fetch Pending Fees": { "main": [[{ "node": "Split Into Individual Students", "type": "main", "index": 0 }]] },
+    "Split Into Individual Students": { "main": [[{ "node": "Prepare Reminder Email", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "CampusFlow" }]
+}

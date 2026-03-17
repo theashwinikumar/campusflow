@@ -1,0 +1,57 @@
+{
+  "name": "2. Leave Request Notifier",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "leave-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook - New Leave Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "to_student", "value": "={{ $json.body.student_email }}" },
+            { "name": "to_approver", "value": "={{ $json.body.approver_email }}" },
+            { "name": "student_subject", "value": "Leave Request Submitted - CampusFlow" },
+            { "name": "student_message", "value": "Dear {{ $json.body.student_name }},\n\nYour leave request has been submitted successfully.\n\nLeave Type: {{ $json.body.leave_type }}\nFrom: {{ $json.body.from_date }}\nTo: {{ $json.body.to_date }}\nReason: {{ $json.body.reason }}\n\nStatus: Pending Approval\nApprover: {{ $json.body.approver_name }}\n\nYou will be notified once your request is reviewed.\n\nRegards,\nCampusFlow" },
+            { "name": "approver_subject", "value": "🔔 New Leave Request - {{ $json.body.student_name }}" },
+            { "name": "approver_message", "value": "A new leave request requires your approval.\n\nStudent: {{ $json.body.student_name }} ({{ $json.body.roll_no }})\nLeave Type: {{ $json.body.leave_type }}\nFrom: {{ $json.body.from_date }}\nTo: {{ $json.body.to_date }}\nDays: {{ $json.body.days }}\nReason: {{ $json.body.reason }}\n\nPlease review and approve/reject on CampusFlow.\n\nRegards,\nCampusFlow Automated System" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-1",
+      "name": "Prepare Notifications",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"notifications_prepared\", \"student_notified\": \"{{ $json.to_student }}\", \"approver_notified\": \"{{ $json.to_approver }}\", \"leave_type\": \"{{ $json.body.leave_type }}\", \"student_subject\": \"{{ $json.student_subject }}\", \"approver_subject\": \"{{ $json.approver_subject }}\"}",
+        "options": {}
+      },
+      "id": "respond-1",
+      "name": "Respond with Status",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [760, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - New Leave Request": { "main": [[{ "node": "Prepare Notifications", "type": "main", "index": 0 }]] },
+    "Prepare Notifications": { "main": [[{ "node": "Respond with Status", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "CampusFlow" }]
+}

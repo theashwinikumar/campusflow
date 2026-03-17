@@ -1,0 +1,112 @@
+{
+  "name": "1. Low Attendance Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "attendance-alert",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook - Attendance Update",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.body.attendance_percentage }}",
+              "rightValue": 75,
+              "operator": { "type": "number", "operation": "lt" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-1",
+      "name": "IF Below 75%",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "to", "value": "={{ $json.body.student_email }}" },
+            { "name": "subject", "value": "⚠️ Low Attendance Alert - CampusFlow" },
+            { "name": "message", "value": "Dear {{ $json.body.student_name }},\n\nYour attendance in {{ $json.body.subject_name }} ({{ $json.body.subject_code }}) has dropped to {{ $json.body.attendance_percentage }}%, which is below the required 75%.\n\nPlease ensure regular attendance to avoid being debarred from examinations.\n\nSubject: {{ $json.body.subject_name }}\nTotal Classes: {{ $json.body.total_classes }}\nClasses Attended: {{ $json.body.classes_attended }}\nCurrent Attendance: {{ $json.body.attendance_percentage }}%\n\nRegards,\nCampusFlow Automated System" },
+            { "name": "status", "value": "alert_sent" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-1",
+      "name": "Prepare Email Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "status", "value": "no_action_needed" },
+            { "name": "message", "value": "Attendance is above 75%. No alert needed." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-2",
+      "name": "No Alert Needed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, 420]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "respond-1",
+      "name": "Respond - Alert Sent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "respond-2",
+      "name": "Respond - No Action",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 420]
+    }
+  ],
+  "connections": {
+    "Webhook - Attendance Update": { "main": [[{ "node": "IF Below 75%", "type": "main", "index": 0 }]] },
+    "IF Below 75%": {
+      "main": [
+        [{ "node": "Prepare Email Alert", "type": "main", "index": 0 }],
+        [{ "node": "No Alert Needed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Email Alert": { "main": [[{ "node": "Respond - Alert Sent", "type": "main", "index": 0 }]] },
+    "No Alert Needed": { "main": [[{ "node": "Respond - No Action", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "CampusFlow" }]
+}

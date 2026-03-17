@@ -1,0 +1,117 @@
+{
+  "name": "5. Event Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Schedule - Daily 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "query_description", "value": "Fetch events happening in next 24 hours from Supabase" }
+          ],
+          "object": [
+            {
+              "name": "todays_events",
+              "value": "[{\"title\": \"TechFest 2026 - Hackathon\", \"venue\": \"Main Auditorium\", \"time\": \"10:00 AM\", \"category\": \"Technical\", \"organizer\": \"CS Department\"}, {\"title\": \"Cultural Night Rehearsal\", \"venue\": \"Open Air Theatre\", \"time\": \"5:00 PM\", \"category\": \"Cultural\", \"organizer\": \"Cultural Club\"}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-1",
+      "name": "Mock - Fetch Today's Events",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.todays_events }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "isNotEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-1",
+      "name": "IF Events Exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [740, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "todays_events",
+        "options": {}
+      },
+      "id": "split-1",
+      "name": "Split Events",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "to", "value": "all-students@college.edu" },
+            { "name": "subject", "value": "🎉 Today's Event: {{ $json.title }}" },
+            { "name": "message", "value": "Reminder! An event is happening today on campus.\n\n📌 {{ $json.title }}\n📍 Venue: {{ $json.venue }}\n🕐 Time: {{ $json.time }}\n🏷️ Category: {{ $json.category }}\n🎓 Organized by: {{ $json.organizer }}\n\nDon't miss out!\n\n— CampusFlow Events" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-2",
+      "name": "Prepare Event Reminder",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "status", "value": "no_events_today" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-3",
+      "name": "No Events Today",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, 420]
+    }
+  ],
+  "connections": {
+    "Schedule - Daily 8AM": { "main": [[{ "node": "Mock - Fetch Today's Events", "type": "main", "index": 0 }]] },
+    "Mock - Fetch Today's Events": { "main": [[{ "node": "IF Events Exist", "type": "main", "index": 0 }]] },
+    "IF Events Exist": {
+      "main": [
+        [{ "node": "Split Events", "type": "main", "index": 0 }],
+        [{ "node": "No Events Today", "type": "main", "index": 0 }]
+      ]
+    },
+    "Split Events": { "main": [[{ "node": "Prepare Event Reminder", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "CampusFlow" }]
+}
