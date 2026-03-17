@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: '/fees', label: 'Fees', icon: '💰', roles: ['student', 'admin'] },
   { path: '/library', label: 'Library', icon: '📚', roles: ['student', 'faculty', 'admin'] },
   { path: '/notes', label: 'Notes', icon: '📒', roles: ['student', 'faculty', 'admin'] },
+  { path: '/placements', label: 'Placements', icon: '💼', roles: ['student', 'faculty', 'admin'] },
   { path: '/timetable', label: 'Timetable', icon: '🕐', roles: ['student', 'faculty', 'admin'] },
   { path: '/exams', label: 'Exams', icon: '📝', roles: ['student', 'faculty', 'admin'] },
   { path: '/noticeboard', label: 'Noticeboard', icon: '📢', roles: ['student', 'faculty', 'admin', 'warden'] },
