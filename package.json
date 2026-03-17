@@ -1,0 +1,33 @@
+{
+  "name": "campusflow",
+  "version": "1.0.0",
+  "description": "CampusFlow - Unified College Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theashwinikumar/campusflow.git"
+  },
+  "keywords": ["campus", "college", "education", "platform"],
+  "author": "theashwinikumar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/theashwinikumar/campusflow/issues"
+  },
+  "homepage": "https://github.com/theashwinikumar/campusflow#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.0"
+  }
+}

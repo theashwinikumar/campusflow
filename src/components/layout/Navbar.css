@@ -1,0 +1,111 @@
+.navbar {
+  height: var(--navbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-xl);
+  background: rgba(6, 11, 24, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.navbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.navbar__menu-btn {
+  display: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 1.3rem;
+  padding: var(--space-sm);
+}
+
+.navbar__greeting {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.navbar__greeting-text {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.navbar__greeting-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+.navbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.navbar__icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.navbar__icon-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.navbar__badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: white;
+  margin-left: var(--space-sm);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .navbar__menu-btn {
+    display: flex;
+  }
+
+  .navbar {
+    padding: 0 var(--space-md);
+  }
+}
