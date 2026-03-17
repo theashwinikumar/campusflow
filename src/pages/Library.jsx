@@ -1,25 +1,18 @@
 import { useState } from 'react';
-
-const BOOKS = [
-  { id: 1, title: 'Introduction to Algorithms', author: 'Cormen, Leiserson, Rivest', isbn: '978-0262033848', copies: 5, available: 2, category: 'CS' },
-  { id: 2, title: 'Operating System Concepts', author: 'Silberschatz, Galvin', isbn: '978-1119800361', copies: 4, available: 1, category: 'CS' },
-  { id: 3, title: 'Database System Concepts', author: 'Korth, Sudarshan', isbn: '978-0078022159', copies: 3, available: 3, category: 'CS' },
-  { id: 4, title: 'Computer Networking', author: 'Kurose, Ross', isbn: '978-0133594140', copies: 4, available: 0, category: 'CS' },
-  { id: 5, title: 'Discrete Mathematics', author: 'Rosen', isbn: '978-0073383095', copies: 6, available: 4, category: 'Math' },
-  { id: 6, title: 'Engineering Physics', author: 'Gaur, Gupta', isbn: '978-8177091888', copies: 3, available: 2, category: 'Physics' },
-  { id: 7, title: 'Linear Algebra', author: 'Gilbert Strang', isbn: '978-0980232714', copies: 3, available: 1, category: 'Math' },
-  { id: 8, title: 'Clean Code', author: 'Robert C. Martin', isbn: '978-0132350884', copies: 2, available: 0, category: 'CS' },
-];
-
-const ISSUED = [
-  { book: 'Introduction to Algorithms', issueDate: '2026-03-01', dueDate: '2026-03-19', fine: 0 },
-  { book: 'Clean Code', issueDate: '2026-02-15', dueDate: '2026-03-15', fine: 20 },
-  { book: 'Discrete Mathematics', issueDate: '2026-03-10', dueDate: '2026-03-24', fine: 0 },
-];
+import { useAuth } from '../context/AuthContext';
+import { useLibraryData } from '../hooks/useLibraryData';
 
 export default function Library() {
+  const { user } = useAuth();
+  const { books, issued, reserveBook, renewBook, loading } = useLibraryData(user);
+  
   const [search, setSearch] = useState('');
-  const filtered = BOOKS.filter(b => b.title.toLowerCase().includes(search.toLowerCase()) || b.author.toLowerCase().includes(search.toLowerCase()));
+
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>Loading library catalog...</div>;
+  }
+
+  const filtered = books.filter(b => b.title.toLowerCase().includes(search.toLowerCase()) || b.author.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="page-container">
@@ -29,10 +22,10 @@ export default function Library() {
       </div>
 
       <div className="stats-grid">
-        <div className="glass-card stat-card"><div className="stat-card__icon">📖</div><div className="stat-card__value">{BOOKS.length}</div><div className="stat-card__label">Total Titles</div></div>
-        <div className="glass-card stat-card"><div className="stat-card__icon">✅</div><div className="stat-card__value">{BOOKS.reduce((a, b) => a + b.available, 0)}</div><div className="stat-card__label">Available</div></div>
-        <div className="glass-card stat-card"><div className="stat-card__icon">📕</div><div className="stat-card__value">{ISSUED.length}</div><div className="stat-card__label">Your Issued</div></div>
-        <div className="glass-card stat-card"><div className="stat-card__icon">⚠️</div><div className="stat-card__value">₹{ISSUED.reduce((a, b) => a + b.fine, 0)}</div><div className="stat-card__label">Pending Fines</div></div>
+        <div className="glass-card stat-card"><div className="stat-card__icon">📖</div><div className="stat-card__value">{books.length}</div><div className="stat-card__label">Total Titles</div></div>
+        <div className="glass-card stat-card"><div className="stat-card__icon">✅</div><div className="stat-card__value">{books.reduce((a, b) => a + (b.available || 0), 0)}</div><div className="stat-card__label">Available</div></div>
+        <div className="glass-card stat-card"><div className="stat-card__icon">📕</div><div className="stat-card__value">{issued.length}</div><div className="stat-card__label">Your Issued</div></div>
+        <div className="glass-card stat-card"><div className="stat-card__icon">⚠️</div><div className="stat-card__value">₹{issued.reduce((a, b) => a + (b.fine || 0), 0)}</div><div className="stat-card__label">Pending Fines</div></div>
       </div>
 
       {/* My Issued Books */}
@@ -41,15 +34,18 @@ export default function Library() {
         <table className="data-table">
           <thead><tr><th>Book</th><th>Issue Date</th><th>Due Date</th><th>Fine</th><th>Action</th></tr></thead>
           <tbody>
-            {ISSUED.map((ib, i) => (
-              <tr key={i}>
+            {issued.map(ib => (
+              <tr key={ib.id}>
                 <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{ib.book}</td>
                 <td>{new Date(ib.issueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
                 <td>{new Date(ib.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
                 <td>{ib.fine > 0 ? <span className="badge badge-red">₹{ib.fine}</span> : <span className="badge badge-green">No fine</span>}</td>
-                <td><button className="btn btn-secondary" style={{ fontSize: 'var(--text-xs)', padding: '4px 12px' }}>Renew</button></td>
+                <td><button className="btn btn-secondary" onClick={() => renewBook(ib.id)} style={{ fontSize: 'var(--text-xs)', padding: '4px 12px' }}>Renew</button></td>
               </tr>
             ))}
+            {issued.length === 0 && (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No books currently issued.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -76,12 +72,15 @@ export default function Library() {
                 </td>
                 <td>
                   {book.available > 0
-                    ? <button className="btn btn-primary" style={{ fontSize: 'var(--text-xs)', padding: '4px 12px' }}>Reserve</button>
+                    ? <button className="btn btn-primary" onClick={() => reserveBook(book.id)} style={{ fontSize: 'var(--text-xs)', padding: '4px 12px' }}>Reserve</button>
                     : <button className="btn btn-ghost" style={{ fontSize: 'var(--text-xs)' }}>Waitlist</button>
                   }
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No books match your search.</td></tr>
+            )}
           </tbody>
         </table>
       </div>

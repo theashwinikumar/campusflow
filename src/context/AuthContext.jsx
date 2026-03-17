@@ -1,4 +1,5 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
+import { supabase, IS_DEMO_MODE } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 
@@ -12,23 +13,100 @@ const DEMO_USERS = {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (role) => {
+  useEffect(() => {
+    if (IS_DEMO_MODE) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchUserProfile = async (userId) => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (error) throw error;
+        setUser({ ...data }); 
+      } catch (error) {
+        console.error('Error fetching user profile:', error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const getSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error.message);
+      }
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          fetchUserProfile(session.user.id);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  const loginWithSupabase = async (email, password) => {
     setLoading(true);
-    // Demo login — pick user by role
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) {
+      setLoading(false);
+      throw error;
+    }
+    return data;
+  };
+
+  const loginDemo = async (role) => {
+    setLoading(true);
     await new Promise(r => setTimeout(r, 600));
     setUser(DEMO_USERS[role] || DEMO_USERS.student);
     setLoading(false);
   };
 
-  const logout = () => {
+  const login = async (roleOrEmail, password) => {
+    if (IS_DEMO_MODE) {
+      return loginDemo(roleOrEmail);
+    } else {
+      return loginWithSupabase(roleOrEmail, password);
+    }
+  };
+
+  const logout = async () => {
+    if (!IS_DEMO_MODE) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

@@ -1,14 +1,8 @@
+import { useAuth } from '../context/AuthContext';
+import { useTimetableData } from '../hooks/useTimetableData';
+
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const SLOTS = ['9:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00', '12:00 - 1:00', '2:00 - 3:00', '3:00 - 4:00', '4:00 - 5:00'];
-
-const TIMETABLE = {
-  Monday:    ['CS301 - DS', 'CS302 - OS', 'MA301 - DM', '— Lunch —', 'CS303 - DBMS', 'CS304 - CN Lab', 'CS304 - CN Lab'],
-  Tuesday:   ['CS303 - DBMS', 'CS301 - DS', 'CS305 - SE', '— Lunch —', 'MA301 - DM', 'CS302 - OS Lab', 'CS302 - OS Lab'],
-  Wednesday: ['MA301 - DM', 'CS304 - CN', 'CS301 - DS', '— Lunch —', 'CS305 - SE', 'CS301 - DS Lab', 'CS301 - DS Lab'],
-  Thursday:  ['CS302 - OS', 'CS303 - DBMS', 'CS304 - CN', '— Lunch —', 'CS301 - DS', 'CS305 - SE Lab', 'CS305 - SE Lab'],
-  Friday:    ['CS305 - SE', 'MA301 - DM', 'CS302 - OS', '— Lunch —', 'CS303 - DBMS Lab', 'CS303 - DBMS Lab', '— Free —'],
-  Saturday:  ['CS304 - CN', 'MA301 - DM', '— Free —', '— Lunch —', '— Free —', '— Free —', '— Free —'],
-};
 
 const SUBJECT_COLORS = {
   'CS301': 'rgba(59, 130, 246, 0.15)',
@@ -25,13 +19,20 @@ function getSubjectBg(cell) {
 }
 
 export default function Timetable() {
+  const { user } = useAuth();
+  const { timetable, loading } = useTimetableData(user);
+  
   const today = DAYS[new Date().getDay() - 1] || 'Monday';
+
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>Loading timetable...</div>;
+  }
 
   return (
     <div className="page-container">
       <div className="page-header">
         <h1>🕐 Timetable</h1>
-        <p>Your weekly class schedule — 3rd Year, CS Section A</p>
+        <p>Your weekly class schedule — {user?.year || '3rd Year'}, {user?.department || 'CS'} Section {user?.section || 'A'}</p>
       </div>
 
       <div className="glass-card section-card" style={{ overflowX: 'auto' }}>
@@ -51,7 +52,7 @@ export default function Timetable() {
               <tr key={si}>
                 <td style={{ fontWeight: 500, fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{slot}</td>
                 {DAYS.map(day => {
-                  const cell = TIMETABLE[day][si];
+                  const cell = timetable[day][si] || '— Free —';
                   const isLunch = cell.includes('Lunch');
                   const isFree = cell.includes('Free');
                   return (

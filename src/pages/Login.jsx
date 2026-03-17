@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { IS_DEMO_MODE } from '../lib/supabase';
 import './Login.css';
 
 const ROLES = [
@@ -14,11 +15,29 @@ export default function Login() {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = async () => {
-    if (!selectedRole) return;
-    await login(selectedRole);
-    navigate('/dashboard');
+  const handleLogin = async (e) => {
+    e?.preventDefault();
+    setError('');
+    
+    try {
+      if (IS_DEMO_MODE) {
+        if (!selectedRole) return;
+        await login(selectedRole);
+      } else {
+        if (!email || !password) {
+          setError('Email and password are required');
+          return;
+        }
+        await login(email, password);
+      }
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    }
   };
 
   return (
@@ -37,43 +56,66 @@ export default function Login() {
         </div>
 
         <div className="login-form">
-          <div className="login-field">
-            <label>Email</label>
-            <input type="email" className="input-field" placeholder="you@campus.edu" />
-          </div>
-          <div className="login-field">
-            <label>Password</label>
-            <input type="password" className="input-field" placeholder="••••••••" />
-          </div>
-
-          <div className="login-roles">
-            <label>Select your role</label>
-            <div className="login-roles-grid">
-              {ROLES.map(r => (
-                <button
-                  key={r.key}
-                  className={`login-role-card ${selectedRole === r.key ? 'login-role-card--active' : ''}`}
-                  onClick={() => setSelectedRole(r.key)}
-                >
-                  <span className="login-role-icon">{r.icon}</span>
-                  <span className="login-role-label">{r.label}</span>
-                  <span className="login-role-desc">{r.desc}</span>
-                </button>
-              ))}
+          {error && <div className="login-error" style={{color: '#ef4444', marginBottom: '1rem', textAlign: 'center'}}>{error}</div>}
+          
+          <form onSubmit={handleLogin} style={{display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%'}}>
+            <div className="login-field">
+              <label>Email</label>
+              <input 
+                type="email" 
+                className="input-field" 
+                placeholder="you@campus.edu" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
+              />
             </div>
-          </div>
+            <div className="login-field">
+              <label>Password</label>
+              <input 
+                type="password" 
+                className="input-field" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
 
-          <button
-            className="btn btn-primary login-submit"
-            onClick={handleLogin}
-            disabled={!selectedRole || loading}
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+            {IS_DEMO_MODE && (
+              <div className="login-roles">
+                <label>Select your role</label>
+                <div className="login-roles-grid">
+                  {ROLES.map(r => (
+                    <button
+                      type="button"
+                      key={r.key}
+                      className={`login-role-card ${selectedRole === r.key ? 'login-role-card--active' : ''}`}
+                      onClick={() => { setSelectedRole(r.key); setEmail(r.key + '@campus.edu'); setPassword('demo'); }}
+                    >
+                      <span className="login-role-icon">{r.icon}</span>
+                      <span className="login-role-label">{r.label}</span>
+                      <span className="login-role-desc">{r.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          <p className="login-demo-note">
-            🔬 Demo Mode — select a role and click Sign In
-          </p>
+            <button
+              type="submit"
+              className="btn btn-primary login-submit"
+              disabled={(IS_DEMO_MODE && !selectedRole) || loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          {IS_DEMO_MODE && (
+            <p className="login-demo-note">
+              🔬 Demo Mode — select a role and click Sign In
+            </p>
+          )}
         </div>
       </div>
     </div>

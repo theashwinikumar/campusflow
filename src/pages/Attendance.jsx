@@ -1,44 +1,30 @@
-import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-
-const SUBJECTS = [
-  { code: 'CS301', name: 'Data Structures', total: 40, present: 36, faculty: 'Dr. Priya Mehta' },
-  { code: 'CS302', name: 'Operating Systems', total: 38, present: 30, faculty: 'Dr. Amit Verma' },
-  { code: 'CS303', name: 'Database Systems', total: 42, present: 38, faculty: 'Dr. Neha Gupta' },
-  { code: 'CS304', name: 'Computer Networks', total: 35, present: 28, faculty: 'Dr. Ravi Kumar' },
-  { code: 'MA301', name: 'Discrete Mathematics', total: 40, present: 37, faculty: 'Dr. Sanjay Joshi' },
-  { code: 'CS305', name: 'Software Engineering', total: 30, present: 27, faculty: 'Prof. Anita Roy' },
-];
-
-const STUDENTS_LIST = [
-  { id: 1, name: 'Arjun Sharma', rollNo: 'CS2023001', status: 'present' },
-  { id: 2, name: 'Sneha Patel', rollNo: 'CS2023002', status: 'present' },
-  { id: 3, name: 'Rohan Gupta', rollNo: 'CS2023003', status: 'absent' },
-  { id: 4, name: 'Priya Singh', rollNo: 'CS2023004', status: 'present' },
-  { id: 5, name: 'Vikram Rao', rollNo: 'CS2023005', status: 'present' },
-  { id: 6, name: 'Ananya Das', rollNo: 'CS2023006', status: 'absent' },
-  { id: 7, name: 'Karthik Nair', rollNo: 'CS2023007', status: 'present' },
-  { id: 8, name: 'Divya Menon', rollNo: 'CS2023008', status: 'present' },
-];
+import { useAttendanceData } from '../hooks/useAttendanceData';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEKS = [
-  [1,1,1,1,1,0], [1,1,0,1,1,0], [1,1,1,1,0,0], [1,0,1,1,1,1],
-  [1,1,1,0,1,0], [0,1,1,1,1,0], [1,1,1,1,1,0], [1,1,0,1,1,1],
-];
 
 export default function Attendance() {
   const { user } = useAuth();
-  const [students, setStudents] = useState(STUDENTS_LIST);
+  const { 
+    subjects, 
+    students, 
+    weeks, 
+    loading, 
+    submitting,
+    toggleStatus, 
+    markAllPresent, 
+    submitAttendance 
+  } = useAttendanceData(user);
+  
   const isFaculty = user?.role === 'faculty' || user?.role === 'admin';
 
-  const toggleStatus = (id) => {
-    setStudents(prev => prev.map(s =>
-      s.id === id ? { ...s, status: s.status === 'present' ? 'absent' : 'present' } : s
-    ));
-  };
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.7 }}>Loading attendance data...</div>;
+  }
 
-  const overallPct = Math.round(SUBJECTS.reduce((a, s) => a + (s.present / s.total), 0) / SUBJECTS.length * 100);
+  const overallPct = subjects.length 
+    ? Math.round(subjects.reduce((a, s) => a + (s.present / (s.total || 1)), 0) / subjects.length * 100)
+    : 100;
 
   return (
     <div className="page-container">
@@ -56,17 +42,17 @@ export default function Attendance() {
         </div>
         <div className="glass-card stat-card">
           <div className="stat-card__icon">📅</div>
-          <div className="stat-card__value">{SUBJECTS.reduce((a, s) => a + s.total, 0)}</div>
+          <div className="stat-card__value">{subjects.reduce((a, s) => a + s.total, 0)}</div>
           <div className="stat-card__label">Total Classes</div>
         </div>
         <div className="glass-card stat-card">
           <div className="stat-card__icon">✅</div>
-          <div className="stat-card__value">{SUBJECTS.reduce((a, s) => a + s.present, 0)}</div>
+          <div className="stat-card__value">{subjects.reduce((a, s) => a + s.present, 0)}</div>
           <div className="stat-card__label">Classes Attended</div>
         </div>
         <div className="glass-card stat-card">
           <div className="stat-card__icon">⚠️</div>
-          <div className="stat-card__value">{SUBJECTS.filter(s => (s.present / s.total) < 0.75).length}</div>
+          <div className="stat-card__value">{subjects.filter(s => (s.total > 0 && s.present / s.total) < 0.75).length}</div>
           <div className="stat-card__label">Subjects Below 75%</div>
         </div>
       </div>
@@ -86,10 +72,10 @@ export default function Attendance() {
             </tr>
           </thead>
           <tbody>
-            {SUBJECTS.map(s => {
-              const pct = Math.round((s.present / s.total) * 100);
+            {subjects.map((s, i) => {
+              const pct = s.total > 0 ? Math.round((s.present / s.total) * 100) : 100;
               return (
-                <tr key={s.code}>
+                <tr key={s.code || i}>
                   <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-blue)' }}>{s.code}</td>
                   <td style={{ color: 'var(--text-primary)' }}>{s.name}</td>
                   <td>{s.faculty}</td>
@@ -112,6 +98,9 @@ export default function Attendance() {
                 </tr>
               );
             })}
+            {subjects.length === 0 && (
+              <tr><td colSpan="6" style={{textAlign: 'center'}}>No data available</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -125,7 +114,7 @@ export default function Attendance() {
               <div key={d} style={{ height: 24, display: 'flex', alignItems: 'center', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{d}</div>
             ))}
           </div>
-          {WEEKS.map((week, wi) => (
+          {weeks.map((week, wi) => (
             <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {week.map((v, di) => (
                 <div key={di} style={{
@@ -173,8 +162,10 @@ export default function Attendance() {
             </tbody>
           </table>
           <div style={{ marginTop: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)' }}>
-            <button className="btn btn-primary">Submit Attendance</button>
-            <button className="btn btn-secondary">Mark All Present</button>
+            <button className="btn btn-primary" onClick={() => submitAttendance()} disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Attendance'}
+            </button>
+            <button className="btn btn-secondary" onClick={markAllPresent}>Mark All Present</button>
           </div>
         </div>
       )}
