@@ -113,37 +113,7 @@ export default function Placements() {
   const [activeTab, setActiveTab] = useState('companies');
   const [companyFilter, setCompanyFilter] = useState('All');
 
-  const [applyingTo, setApplyingTo] = useState(null);
-
   const filteredCompanies = COMPANIES.filter(c => companyFilter === 'All' || c.category === companyFilter);
-
-  // n8n webhook integration — update the URL to match your workflow's webhook path
-  const N8N_WEBHOOK_URL = 'https://manish-ai.app.n8n.cloud/webhook/chat';
-
-  const handleApply = async (company) => {
-    setApplyingTo(company.id);
-    try {
-      await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_name: user?.name || 'Demo Student',
-          student_email: user?.email || 'student@college.edu',
-          student_role: user?.role || 'student',
-          company_name: company.name,
-          role: company.role,
-          package: company.package,
-          location: company.location,
-          min_cgpa: company.cgpa,
-          applied_at: new Date().toISOString(),
-        }),
-      });
-      alert(`Application submitted to ${company.name}! Check n8n for workflow execution.`);
-    } catch {
-      alert(`Application submitted to ${company.name}! (n8n workflow will process when connected)`);
-    }
-    setApplyingTo(null);
-  };
 
   const totalCompanies = COMPANIES.length;
   const studentsPlaced = RESULTS.length;
@@ -287,14 +257,10 @@ export default function Placements() {
 
                 {/* Apply Button */}
                 {company.status === 'upcoming' && (
-                  <button className="btn btn-primary" style={{ width: '100%', marginTop: 'auto' }} onClick={() => handleApply(company)} disabled={applyingTo === company.id}>
-                    {applyingTo === company.id ? 'Submitting...' : 'Apply Now'}
-                  </button>
+                  <button className="btn btn-primary" style={{ width: '100%', marginTop: 'auto' }}>Apply Now</button>
                 )}
                 {company.status === 'ongoing' && (
-                  <button className="btn btn-secondary" style={{ width: '100%', marginTop: 'auto' }} onClick={() => handleApply(company)} disabled={applyingTo === company.id}>
-                    {applyingTo === company.id ? 'Submitting...' : 'Apply Now'}
-                  </button>
+                  <button className="btn btn-secondary" style={{ width: '100%', marginTop: 'auto' }}>Applications Open</button>
                 )}
                 {company.status === 'completed' && (
                   <button className="btn btn-ghost" style={{ width: '100%', marginTop: 'auto', opacity: 0.6 }} disabled>Drive Completed</button>
